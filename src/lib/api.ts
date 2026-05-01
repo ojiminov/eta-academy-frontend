@@ -1,7 +1,11 @@
 import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
 
+// In production (GitHub Pages) VITE_API_URL must point to the Railway backend.
+// In local dev the Vite proxy handles /api → localhost:5000.
+const baseURL = import.meta.env.VITE_API_URL ?? '/api/v1'
+
 const axiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -71,7 +75,7 @@ axiosInstance.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post('/api/v1/auth/refresh', {
+        const response = await axios.post(`${baseURL}/auth/refresh`, {
           refresh_token: refreshToken,
         })
 
