@@ -1,133 +1,233 @@
-export type UserRole = 'student' | 'teacher' | 'admin' | 'billing_manager'
+// ─── Enums ────────────────────────────────────────────────────────────────────
+export type UserRole = 'admin' | 'teacher' | 'student'
+export type UserStatus = 'active' | 'suspended' | 'pending_verification' | 'deleted'
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused'
+export type GroupStatus = 'active' | 'completed' | 'archived'
+export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled'
+export type GradeType = 'exam' | 'quiz' | 'assignment' | 'oral' | 'homework' | 'midterm' | 'final'
+export type AnnouncementTarget = 'all' | 'students' | 'teachers'
+export type SubjectCategory = 'english' | 'math' | 'science' | 'history' | 'coding' | 'music' | 'art' | 'other'
 
+// ─── Core Entities ────────────────────────────────────────────────────────────
 export interface User {
   id: string
   email: string
   firstName: string
   lastName: string
   avatarUrl?: string
+  phone?: string
   role: UserRole
-  status: 'active' | 'inactive' | 'suspended'
+  status: UserStatus
   emailVerified: boolean
   timezone: string
-  createdAt?: string
-  updatedAt?: string
+  locale: string
+  lastLoginAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
-export interface StudentProfile {
+export interface Student {
   id: string
   userId: string
-  englishLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
+  dateOfBirth?: string
   bio?: string
-  goals?: string
-  xpPoints: number
-  streakDays: number
-  lastActivityAt?: string
+  address?: string
+  parentName?: string
+  parentPhone?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+  user?: User
 }
 
-export interface TeacherProfile {
+export interface Teacher {
   id: string
   userId: string
   bio?: string
-  specializations: string[]
+  subjects: string[]
   qualifications: string[]
-  ratingAvg: number
-  ratingCount: number
+  salary?: number
+  salaryCurrency: string
   isVerified: boolean
+  createdAt: string
+  updatedAt: string
+  user?: User
 }
 
-export interface TeacherSummary {
-  id: string
-  firstName: string
-  lastName: string
-  avatarUrl?: string
-}
-
-export interface CourseCategory {
+export interface Subject {
   id: string
   name: string
-  slug: string
+  code: string
+  description?: string
+  category: SubjectCategory
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
-export type CourseLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'all_levels'
-export type CourseStatus = 'draft' | 'published' | 'archived'
-export type PricingType = 'free' | 'paid' | 'subscription'
-
-export interface Course {
+export interface Schedule {
   id: string
-  title: string
-  slug: string
-  shortDescription: string
-  thumbnailUrl?: string
-  level: CourseLevel
-  status: CourseStatus
-  pricingType: PricingType
-  price: number
+  groupId: string
+  dayOfWeek: DayOfWeek
+  startTime: string
+  endTime: string
+  room?: string
+}
+
+export interface Group {
+  id: string
+  name: string
+  subjectId: string
+  teacherId: string
+  level: string
+  room?: string
+  maxStudents: number
+  status: GroupStatus
+  startDate: string
+  endDate?: string
+  monthlyFee: number
   currency: string
-  durationHours: number
-  ratingAvg: number
-  ratingCount: number
-  enrollmentCount: number
-  teacher: TeacherSummary
-  category?: CourseCategory
-  certificateOnCompletion: boolean
-  createdAt?: string
-  updatedAt?: string
+  description?: string
+  createdAt: string
+  updatedAt: string
+  subject?: Subject
+  teacher?: Teacher & { user?: User }
+  schedules?: Schedule[]
+  _count?: { students: number }
 }
 
-export type ContentType = 'video' | 'audio' | 'text' | 'quiz' | 'assignment'
-
-export interface Lesson {
+export interface GroupStudent {
   id: string
-  courseId: string
-  title: string
-  slug: string
-  contentType: ContentType
-  videoUrl?: string
-  audioUrl?: string
-  contentHtml?: string
-  durationSeconds: number
-  sortOrder: number
-  isPreview: boolean
-  isPublished: boolean
-  createdAt?: string
-  updatedAt?: string
-}
-
-export type EnrollmentStatus = 'active' | 'completed' | 'dropped' | 'expired'
-
-export interface Enrollment {
-  id: string
+  groupId: string
   studentId: string
-  courseId: string
-  status: EnrollmentStatus
   enrolledAt: string
-  completedAt?: string
-  progressPct: number
-  course: Course
+  droppedAt?: string
+  isActive: boolean
+  notes?: string
+  group?: Group
+  student?: Student & { user?: User }
 }
 
-export type CertificateStatus = 'pending' | 'issued' | 'revoked'
+export interface ClassSession {
+  id: string
+  groupId: string
+  teacherId: string
+  date: string
+  topic?: string
+  notes?: string
+  homeworkDesc?: string
+  createdAt: string
+  updatedAt: string
+  group?: Group & { subject?: Subject }
+  teacher?: Teacher & { user?: User }
+  attendance?: Attendance[]
+}
 
-export interface Certificate {
+export interface Attendance {
+  id: string
+  classSessionId: string
+  studentId: string
+  groupStudentId: string
+  status: AttendanceStatus
+  note?: string
+  createdAt: string
+  updatedAt: string
+  student?: Student & { user?: User }
+}
+
+export interface Grade {
   id: string
   studentId: string
-  courseId: string
-  certificateNumber: string
-  status: CertificateStatus
-  pdfUrl?: string
-  verificationUrl?: string
-  issuedAt: string
+  groupStudentId: string
+  gradedById?: string
+  type: GradeType
+  title: string
+  score: number
+  maxScore: number
+  date: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+  groupStudent?: GroupStudent & { group?: Group & { subject?: Subject } }
+  student?: Student & { user?: User }
 }
 
-export interface AuthState {
-  user: User | null
-  accessToken: string | null
-  refreshToken: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
+export interface Payment {
+  id: string
+  studentId: string
+  groupId: string
+  amount: number
+  currency: string
+  month: number
+  year: number
+  status: PaymentStatus
+  paidAt?: string
+  method?: string
+  receiptUrl?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
+  student?: Student & { user?: User }
+  group?: Group & { subject?: Subject }
 }
 
+export interface Announcement {
+  id: string
+  title: string
+  body: string
+  authorId: string
+  target: AnnouncementTarget
+  isPinned: boolean
+  createdAt: string
+  updatedAt: string
+  author?: { firstName: string; lastName: string }
+}
+
+// ─── Dashboard Responses ──────────────────────────────────────────────────────
+export interface AdminDashboardData {
+  kpis: {
+    totalStudents: number
+    totalTeachers: number
+    activeGroups: number
+    totalGroups: number
+    pendingPayments: number
+    overduePayments: number
+    revenueThisMonth: number
+  }
+  revenueByMonth: { month: number; year: number; amount: number }[]
+  attendanceSummary: Record<string, number>
+  recentAnnouncements: Announcement[]
+  upcomingSessions: ClassSession[]
+}
+
+export interface TeacherDashboardData {
+  teacher: Teacher
+  kpis: {
+    activeGroups: number
+    totalStudents: number
+    todaySessions: number
+  }
+  myGroups: Group[]
+  todaySessions: ClassSession[]
+  recentSessions: ClassSession[]
+}
+
+export interface StudentDashboardData {
+  student: Student
+  kpis: {
+    activeGroups: number
+    avgGradePercentage: number | null
+    attendanceThisMonth: Record<string, number>
+    pendingPayments: number
+  }
+  myGroups: GroupStudent[]
+  recentGrades: Grade[]
+  payments: Payment[]
+  announcements: Announcement[]
+}
+
+// ─── API Helpers ──────────────────────────────────────────────────────────────
 export interface ApiMeta {
   page?: number
   limit?: number
@@ -146,13 +246,4 @@ export interface ApiResponse<T> {
   data: T
   meta?: ApiMeta
   error?: ApiError
-}
-
-export interface StudentDashboard {
-  student: StudentProfile
-  enrollments: Enrollment[]
-  xpPoints: number
-  streakDays: number
-  completedCoursesCount: number
-  certificatesCount: number
 }
