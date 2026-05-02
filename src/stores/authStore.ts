@@ -21,9 +21,9 @@ const useAuthStore = create<AuthStore>((set) => {
     // Schedule fetchMe after store is created
     setTimeout(async () => {
       try {
-        const response = await api.get<ApiResponse<User>>('/auth/me')
+        const response = await api.get<ApiResponse<{ user: User }>>('/auth/me')
         set({
-          user: response.data,
+          user: response.data.user,
           isAuthenticated: true,
           isLoading: false,
         })
@@ -43,16 +43,9 @@ const useAuthStore = create<AuthStore>((set) => {
     register: async (firstName: string, lastName: string, email: string, password: string) => {
       set({ isLoading: true })
       try {
-        const response = await api.post<
-          ApiResponse<{ user: User; access_token: string; refresh_token: string }>
-        >('/auth/register', { firstName, lastName, email, password })
-
-        const { user, access_token, refresh_token } = response.data
-
-        localStorage.setItem('access_token', access_token)
-        localStorage.setItem('refresh_token', refresh_token)
-
-        set({ user, isAuthenticated: true, isLoading: false })
+        // Register just creates the account — no tokens returned, user must verify email
+        await api.post('/auth/register', { firstName, lastName, email, password })
+        set({ isLoading: false })
       } catch (error) {
         set({ isLoading: false })
         throw error
@@ -63,13 +56,13 @@ const useAuthStore = create<AuthStore>((set) => {
       set({ isLoading: true })
       try {
         const response = await api.post<
-          ApiResponse<{ user: User; access_token: string; refresh_token: string }>
+          ApiResponse<{ user: User; accessToken: string; refreshToken: string }>
         >('/auth/login', { email, password })
 
-        const { user, access_token, refresh_token } = response.data
+        const { user, accessToken, refreshToken } = response.data
 
-        localStorage.setItem('access_token', access_token)
-        localStorage.setItem('refresh_token', refresh_token)
+        localStorage.setItem('access_token', accessToken)
+        localStorage.setItem('refresh_token', refreshToken)
 
         set({ user, isAuthenticated: true, isLoading: false })
       } catch (error) {
@@ -94,8 +87,8 @@ const useAuthStore = create<AuthStore>((set) => {
     fetchMe: async () => {
       set({ isLoading: true })
       try {
-        const response = await api.get<ApiResponse<User>>('/auth/me')
-        set({ user: response.data, isAuthenticated: true, isLoading: false })
+        const response = await api.get<ApiResponse<{ user: User }>>('/auth/me')
+        set({ user: response.data.user, isAuthenticated: true, isLoading: false })
       } catch {
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
